@@ -1,0 +1,15 @@
+digraph G {
+    label="prepatch(oldVnode, vnode)"
+
+    getOptions [
+        label="options = vnode.componentOptions"
+    ]
+    getChild [
+        label="child = vnode.componentInstance = oldVnode.componentInstance"
+    ]
+    getOptions -> getChild
+    updateChildComponent [
+        label="updateChildComponent()"
+    ]
+    getChild -> updateChildComponent
+}
