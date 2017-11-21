@@ -1,0 +1,42 @@
+digraph G {
+  subgraph cluster_resolveSlots {
+        graph [style=dotted]
+        label="resolveSlots(children, context)"
+
+        initSlots [
+            label="const slots = {}"
+        ]
+
+        returnValue [
+            label="return slots"
+        ]
+        initSlots -> returnValue [label="if(!children)"]
+    }
+
+    subgraph cluster_for {
+        graph[style=dotted]
+        label="for(children)"
+
+        forChildren [
+            label="遍历 children"
+        ]
+        getData [
+            label="data = children[i].data"
+        ]
+
+        initSlots -> forChildren
+        forChildren -> getData
+
+        deleteSolt [
+            label="delete data.attrs.slot"
+        ]
+
+        getData -> deleteSolt [label="data.attrs.slot"]
+
+        getName [
+            label="name = children[i].data.slot"
+        ]
+        deleteSolt -> getName
+        
+    }
+}

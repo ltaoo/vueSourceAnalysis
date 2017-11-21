@@ -1,0 +1,116 @@
+digraph G {
+    graph [
+        label="core/vdom/helpers/update-listeners.js"
+        fontcolor=blue
+    ]
+    start [
+        label="updateListeners(on, oldOn, add, remove, vm)"
+    ]
+    initVar [
+        label="let name, cur, old, event"
+    ]
+    start -> initVar
+    initVar -> forInOn
+    subgraph cluster_for {
+        graph [
+            style=dotted
+            label=""
+        ]
+        forInOn [
+            label="for(name in on)"
+        ]
+        getCurrentEvent [
+            label="cur = on[name]"
+        ]
+        forInOn -> getCurrentEvent
+        getOldEvent [
+            label="old = oldOn[name]"
+        ]
+
+        getCurrentEvent -> getOldEvent
+
+        resetEvent [
+            label="event = normalizeEvent(name)"
+        ]
+
+        getOldEvent -> resetEvent
+
+        curIsUndef [
+            label="isUndef(cur)"
+            shape=diamond
+        ]
+
+        resetEvent -> curIsUndef
+
+
+        notProduction0 [
+            label="process.env.NODE_ENV !== 'production'"
+            shape=diamond
+        ]
+
+        curIsUndef -> notProduction0 [label="yes"]
+        notProduction0 -> warn [label="yes" style=dotted]
+        oldIsUndef [
+            label="isUndef(old)"
+            shape=diamond
+        ]
+        curIsUndef -> oldIsUndef [label="no"]
+        curFnsIsUndef [
+            shape=diamond
+            label="isUndef(cur.fns)"
+        ]
+        oldIsUndef -> curFnsIsUndef [label="yes"]
+        createFnInvoker [
+            label="cur = on[name] = createFnInvoker(cur)"
+        ]
+        curFnsIsUndef -> createFnInvoker [label="yes"]
+        add [
+            label="add(event.name, cur, event.once, event.capture, event.passive)"
+        ]
+        createFnInvoker -> add
+        curFnsIsUndef -> add
+
+        curAndOld [
+            label="cur !== old"
+        ]
+        oldIsUndef -> curAndOld [label="no"]
+
+        setFns [
+            label="old.fns = cur"
+        ]
+        curAndOld -> setFns
+        setName [
+            label="on[name] = old"
+        ]
+        setFns -> setName
+    }
+    warn -> for1
+    add -> for1
+    setName -> for1
+    subgraph cluster_for1 {
+        graph [
+            label=""
+            style=dotted
+        ]
+
+        for1 [
+            label="for (name in oldOn) {"
+        ]
+
+        eventIsUndef [
+            label="isUndef(on[name]"
+            shape=diamond
+        ]
+        for1 -> eventIsUndef
+
+        resetEvent1 [
+            label="event = normalizeEvent(name)"
+        ]
+        eventIsUndef -> resetEvent1 [label="yes"]
+        remove [
+            label="remove(event.name, oldOn[name], event.capture)"
+        ]
+        resetEvent1 -> remove
+    }
+
+}

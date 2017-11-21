@@ -1,23 +1,37 @@
 # vue 源码阅读过程
 
+## 起点
+
+```javascript
+new Vue({
+	el: '#app',
+	template: '<App />',
+	components: { App },
+});
+```
+
+从这里开始，发生了什么？
+
+![function Vue](./constructor.png)
+
+
 ## _init
 
-调用`this._init`发生了什么？
-
-主要来说，就是给`vm`添加了
+在`_init`方法中，主要就是给`vm`添加了一些属性
 
 - vm._uid = uid++
 - vm._isVue = true
+- vm._renderProxy = vm
 - vm.$options = options
-- vm._self = this
-
-以及调用了`beforeCreated`钩子和`created`钩子。
+- vm._self = vm
 
 ![_init](./init.png)
 
+可以看到，最后面是进行了一系列的初始化函数调用，并且调用了两个生命周期钩子，`beforeCreate`和`created`，这又代表什么含义呢？
+
 ### initLifecycle
 
-在`_init`函数内调用了`initLifecycle`函数，从名字看是初始化生命周期？实际上就是给`vm`添加了很多的属性：
+从名字看是初始化生命周期，实际上也是给`vm`实例添加了很多属性。
 
 - vm.$parent = options.parent
 - vm.$root = $parent.root || vm
@@ -30,19 +44,26 @@
 - vm._isDestroyed = false
 - vm._isBeingDestroyed = false
 
+总的来说，就是`$parent`比较麻烦些，大部分情况应该都是`undefined`吧，不然`vm.$options.parent`是什么时候挂载的？
+
+有点出乎意料的是，在这个函数入口打断点，看到的`vm.$options`不只初始化时传入的属性，还有一些框架添加的，但是在什么时候添加的不清楚。[1]
+
 ![initLifecycle](./initLifecycle.png)
 
 ### initEvent
 
-顾名思义，初始化事件，主要就是将`_parentListeners`上的事件，注册到`vm`上？并将旧事件（如果有）就更新或者移除掉。
+从名字就看得出来，在这个函数内会对事件进行初始化，但是，是对什么事件进行初始化？
 
+可以看到是从`$options._parentListeners`上取到所谓的`listeners`，如果存在，就更新到组件上。
 
-![initEvents](./initEvent.png)
+但是默认情况是没有的，要怎么添加，才可以在这里得到呢？[2]
+
+![initEvents](./initEvents.png)
 
 
 ### initRender
 
-额，在这个函数内，做了下面这些事情：
+然后到了这里，从名字来看是初始化`render`？
 
 - vm._vnode = null
 - vm.$solts = resolveSlots()
@@ -53,6 +74,14 @@
 - vm.$listeners
 
 ![initRender](./initRender.png)
+
+在最后，调用`defineReactive`方法，这个方法接收`obj`、`key`和`val`，即一个对象及指定键值对，然后对值注册监听器。
+
+![defineReactive](./defineReactive.png)
+
+那是对我们传入的`data`做监听，实现数据响应吗，不是，从`initRender`这张图片最后可以看到，是对`$attrs`和`$listeners`这两个`vm`上的属性做了这个处理。
+
+所以这里就要深究`Dep`到底是什么，怎么工作的[3]
 
 ### initInjections
 

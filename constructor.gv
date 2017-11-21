@@ -1,0 +1,24 @@
+digraph G {
+    graph [
+        label="core/instance/index.js"
+        fontcolor=blue
+    ]
+
+    start [
+        label="function Vue(options) {"
+    ]
+
+    notProduction [
+        label="process.env.NODE_ENV !== 'production' && !(this instanceof Vue)"
+        shape=diamond
+    ]
+
+    start -> notProduction
+
+    notProduction -> warn [label="yes"]
+    init [
+        label="this._init(options)"
+    ]
+    notProduction -> init
+    warn -> init
+}

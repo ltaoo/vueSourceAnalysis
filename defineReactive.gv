@@ -1,0 +1,143 @@
+digraph G {
+    graph[
+        label="core/observe/index.js"
+        fontcolor=blue
+    ]
+    start [
+        label="defineReactive(obj, key, val, customSetter, shallow)"
+    ]
+    varDep [
+        label="const dep = new Dep()"
+    ]
+    start -> varDep
+
+    varProperty [
+        label="const property=Object.getOwnPropertyDescriptor(obj, key)"
+    ]
+    varDep -> varProperty
+    notConfigurable [
+        label="property && property.configurable === false"
+        shape=diamond
+    ]
+    varProperty -> notConfigurable
+    end [
+        label="return"
+    ]
+    notConfigurable -> end [label="yes"]
+
+    varGetter [
+        label="const getter = property.get"
+    ]
+    notConfigurable -> varGetter [label="no"]
+    varSetter [
+        label="const setter = property.set"
+    ]
+    varGetter -> varSetter
+
+    varChildOb [
+        label="childObj=!shallow && observe(val)"
+        shape=rect
+        color=red
+        fontcolor=red
+    ]
+    // 获得观察者
+    varSetter -> varChildOb
+
+    setSetAndGet [
+        label="Object.defineProperty(obj, key, {})"
+    ]
+
+    varChildOb -> setSetAndGet
+    setSetAndGet -> getValue
+    subgraph cluster_reactiveGetter {
+        label="get"
+        getValue [
+            label="const value = getter ? getter.call(obj) : val"
+        ]
+        depTarget [
+            label="Dep.target"
+            shape=diamond
+        ]
+        getValue -> depTarget
+        returnGetValue [
+            label="return value"
+        ]
+        depTarget -> returnGetValue
+        callDepend [
+            label="dep.depend()"
+        ]
+        depTarget -> callDepend [label="yes"]
+        childOb [
+            label="childOb"
+            shape=diamond
+        ]
+        callDepend -> childOb
+        callChildObDepend [
+            label="childOb.dep.depend"
+        ]
+        childOb -> callChildObDepend [label="yes"]
+        isArray1 [
+            label="Array.isArray(value"
+            shape=diamond
+        ]
+        callChildObDepend -> isArray1
+        dependArray [
+            label="dependArray(value)"
+        ]
+
+        isArray1 -> dependArray [label="yes"]
+
+        childOb -> returnGetValue
+        isArray1 -> returnGetValue
+    }
+    setSetAndGet -> getSetValue
+    subgraph cluster_reactiveSetter {
+        label="set"
+
+        getSetValue [
+            label="const value = getter ? getter.call(obj) : val"
+        ]
+        same [
+            label="newVal === value || (newVal !== newVal && value !== value)"
+            shape=diamond
+        ]
+        getSetValue -> same
+        end1 [
+            label="return"
+        ]
+        same -> end1 [label="yes"]
+        notProduction [
+            label="process.env.NODE_ENV !== 'production' && customSetter"
+            shape=diamond
+        ]
+        same -> notProduction
+        customSetter [
+            label="customSetter()"
+        ]
+        notProduction -> customSetter [label="yes"]
+        setter1 [
+            label="setter"
+            shape=diamond
+        ]
+        notProduction -> setter1
+        customSetter -> setter1
+        callSetter [
+            label="setter.call(obj, newVal)"
+        ]
+        setter1 -> callSetter [label="yes"]
+        resetVal [
+            label="val = newVal"
+        ]
+        setter1 -> resetVal [label="no"]
+
+        resetChildOb [
+            label="!shallow && observe(newVal)"
+        ]
+        callSetter -> resetChildOb
+        resetVal -> resetChildOb
+        notify [
+            label="dep.notify()"
+        ]
+        resetChildOb -> notify
+    }
+}

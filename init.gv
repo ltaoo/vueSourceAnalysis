@@ -1,81 +1,159 @@
 digraph G {
+    graph [
+        label="core/instance/init.js"
+        fontcolor=blue
+    ]
+
+    start [
+        label="Vue.prototype._init = function (options) {"
+    ]
+
+    varVm [
+        label="const vm = this"
+    ]
+    start -> varVm
     setUid [
         label="vm._uid = uid++"
+        fontcolor=red
     ]
-    _init -> setUid
+    varVm -> setUid
+
+    varTag [
+        label="let startTag, endTag"
+    ]
+    setUid -> varTag
+
+    notProduction [
+        label="process.env.NODE_ENV !== 'production' && config.performance && mark"
+        shape=diamond
+    ]
+
+    varTag -> notProduction
+
+    resetStart [
+        label="startTag = `vue-perf-start:${vm._uid}`"
+    ]
+    notProduction -> resetStart [label="yes" style=dotted]
+    resetEnd [
+        label="endTag = `vue-perf-end:${vm._uid}`"
+    ]
+    resetStart -> resetEnd
+    mark [
+        label="mark(startTag)"
+    ]
+    resetEnd -> mark
+
     setIsVue [
-        label="vm.isVue = true"
+        label="vm._isVue = true"
+        fontcolor=red
     ]
-    setUid -> setIsVue
+    notProduction -> setIsVue
+    mark -> setIsVue
 
     isComponent [
+        label="options && options._isComponent"
         shape=diamond
     ]
     setIsVue -> isComponent
 
-    isComponent -> initInternalComponent [label="yes"]
+    isComponent -> initInternalComponent [label="yes" style=dotted]
     setOptions [
-        label="vm.$options = mergeOptions(...)"
+        label="vm.$options = mergeOptions(
+        resolveConstructorOptions(vm.constructor),
+        options || {},
+        vm)"
     ]
     isComponent -> setOptions [label="no"]
-    subgraph cluster_setOptions {
-        graph[style=dotted]
-        label="mergeOptions(parent, child, vm)"
-        normalizeProps -> normalizeInject
-        normalizeInject -> normalizeDirectives
-        hasExtends [
-            shape=diamond
-        ]
-        normalizeDirectives -> hasExtends
-        callMergeOptions [
-            label="parent = mergeOptions()"
-        ]
-        hasExtends -> callMergeOptions [label="yes"]
-        hasMixins [
-            shape=diamond
-        ]
-        hasExtends -> hasMixins
-        callMergeoptionsByFor [
-            label="在 for 循环内调用 mergeOptions"
-        ]
-        hasMixins -> callMergeoptionsByFor [label="yes"]
-        mergeParentField [
-            label="for(key in parent) mergeField"
-        ]
-        hasMixins -> mergeParentField
-        mergeChildField [
-            label="for(key in child) mergeField"
-        ]
-        mergeParentField -> mergeChildField
-        mergeChildField -> return
-    }
-    isProduction [
-        label="is production ?"
+    notProduction2 [
+        label="process.env.NODE_ENV !== 'production'"
         shape=diamond
     ]
-    initInternalComponent -> isProduction
-    setOptions -> isProduction
-    isProduction -> initProxy [label="yes"]
+    initInternalComponent -> notProduction2
+    setOptions -> notProduction2
+    initProxy [
+        label="initProxy(vm)"
+    ]
+    notProduction2 -> initProxy [label="yes" style=dotted]
     setRenderProxy [
         label="vm._renderProxy = vm"
+        fontcolor=red
     ]
-    isProduction -> setRenderProxy [label="no"]
+    notProduction2 -> setRenderProxy [label="no"]
     setSelf [
-        label="vm.self = vm"
+        label="vm._self = vm"
+        fontcolor=red
     ]
     initProxy -> setSelf
     setRenderProxy -> setSelf
+
+    initLifecycle [
+        label="initLifecycle(vm)"
+    ]
     setSelf -> initLifecycle
+
+    initEvents [
+        label="initEvents(vm)"
+    ]
     initLifecycle -> initEvents
+
+    initRender [
+        label="initRender(vm)"
+    ]
     initEvents -> initRender
     callBeforeCreateHook [
-        shape=rect
+        label="callHook(vm, 'beforeCreate')"
+        color=green
+        fontcolor=green
     ]
     initRender -> callBeforeCreateHook
+
+    initInjections [
+        label="initInjections(vm)"
+    ]
     callBeforeCreateHook -> initInjections
+
+    initProvide [
+        label="initProvide(vm)"
+    ]
     initInjections -> initProvide
     callCreatedHook [
-        shape=rect
+        label="callHook(vm, 'created')"
+        color=green
+        fontcolor=green
     ]
     initProvide -> callCreatedHook
+
+    notProduction3 [
+        label="process.env.NODE_ENV !== 'production' && config.performance && mark"
+        shape=diamond
+    ]
+
+    callCreatedHook -> notProduction3
+
+    setName [
+        label="vm._name = formatComponentName(vm, false)"
+        fontcolor=red
+    ]
+    notProduction3 -> setName [label="yes" style=dotted]
+    markEnd [
+        label="mark(endTag)"
+    ]
+    setName -> markEnd
+    measure [
+        label="measure(`vue ${vm._name} init`, startTag, endTag)"
+    ]
+    markEnd -> measure
+
+    hasEl [
+        label="vm.$options.el"
+        shape=diamond
+    ]
+    notProduction3 -> hasEl
+    measure -> hasEl
+
+    mount [
+        label="vm.$mount(vm.$options.el)"
+    ]
+
+    hasEl -> mount [label="yes"]
 }
