@@ -1,0 +1,112 @@
+digraph G {
+    graph[
+        style=dotted
+        lable="function resolveRejection(inject, vm)"
+    ]
+
+    ifInject [
+        label="inject"
+        shape=diamond
+    ]
+
+    getNewResult [
+        label="result = Object.create(null)"
+    ]
+    ifInject -> getNewResult [label="yes"]
+    hasSymbol [
+        label="hasSymbol"
+        shape=diamond
+    ]
+    getNewResult -> hasSymbol
+    resetKey0 [
+        label="const keys = Reflect.ownKeys(inject).filter(key => {
+        /* istanbul ignore next */
+        return Object.getOwnPropertyDescriptor(inject, key).enumerable
+        })"
+    ]
+    hasSymbol -> resetKey0 [label="yes"]
+    resetKey1 [
+        label="const keys = Object.keys(inject)"
+    ]
+    hasSymbol -> resetKey1 [label="no"]
+    resetKey1 -> walkKeys
+    resetKey0 -> walkKeys
+    subgraph cluster_walk {
+        graph[
+            label=""
+            style=dotted
+        ]
+        walkKeys [
+            label="for(let i = 0; i < keys.length; i += 1) {"
+        ]
+        varKey [
+            label="const key = keys[i]"
+        ]
+        walkKeys -> varKey
+        getProvideKey [
+            label="provideKey=inject[key].from"
+        ]
+        varKey -> getProvideKey
+
+        varSource [
+            label="const source = vm"
+        ]
+
+        getProvideKey -> varSource
+        varSource -> walkSource
+        subgraph cluster_walkSource {
+            graph[style=dotted]
+
+            walkSource [
+                label="while(source)"
+            ]
+            inProvided [
+                label="source._provided && provideKey in source._provided"
+                shape=diamond
+            ]
+            walkSource -> inProvided
+            setResult [
+                label="result[key] = source._provided[provideKey]"
+            ]
+            inProvided -> setResult [label="yes"]
+            end [
+                label="break"
+            ]
+            setResult -> end
+            resetSource [
+                label="source = source.$parent"
+            ]
+            inProvided -> resetSource
+        }
+        notSource [
+            label="!source"
+            shape=diamond
+        ]
+        end -> notSource
+        resetSource -> notSource
+        hasDefault [
+            label="'default' in inject[key]"
+        ]
+        notSource -> hasDefault [label="yes"]
+        varProvideDefault [
+            label="const provideDefault = inject[key].default"
+        ]
+        hasDefault -> varProvideDefault
+        resetResult1 [
+            label="result[key] = typeof provideDefault === 'function' ? provideDefault.call(vm) : provideDefault"
+        ]
+        varProvideDefault -> resetResult1
+        notProduction [
+            label="process.env.NODE_ENV !== 'production'"
+            shape=diamond
+        ]
+        hasDefault -> notProduction [label="no"]
+        notProduction -> warn [label="yes"]
+
+    }
+    warn -> returnReuslt
+    resetResult1 -> returnReuslt
+    returnReuslt [
+        label="return result"
+    ]
+}

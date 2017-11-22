@@ -1,48 +1,72 @@
 digraph G {
-    label="initState(vm)"
-
+    graph [
+        label="initState(vm)"
+        fontcolor=blue
+    ]
+    start [
+        label="function initState(vm) {"
+    ]
     initWatcher [
-        lable="vm._watchers = []"
+        label="vm._watchers = []"
+        fontcolor=red
     ]
-
-    getOptins [
-        label="opts = vm.$options"
+    start -> initWatcher
+    varOptins [
+        label="const opts = vm.$options"
     ]
-
-    initWatcher -> getOptins
-
+    initWatcher -> varOptins
+    hasProps [
+        label="opts.props"
+        shape=diamond
+    ]
+    varOptins -> hasProps
     initProps [
         label="initProps(vm, opts.props)"
     ]
-
-    getOptins -> initProps [label="opts.props is true"]
-
+    hasProps -> initProps [label="yes"]
+    hasMethods [
+        label="opts.methods"
+        shape=diamond
+    ]
+    initProps -> hasMethods
+    hasProps -> hasMethods
     initMethods [
         label="initMethods(vm, opts.methods)"
     ]
-
-    initProps -> initMethods [label="opts.methods is true"]
-
+    hasMethods -> initMethods [label="yes"]
+    hasData [
+        label="opts.data"
+        shape=diamond
+    ]
+    initMethods -> hasData
+    hasMethods -> hasData
     initData [
         label="initData(vm, opts.data)"
     ]
-
-    initMethods -> initData [label="opts.data is true"]
+    hasData -> initData [label="yes"]
     observe [
         label="observe(vm._data={}, true)"
+        fontcolor=red
     ]
-    initMethods -> observe [label="opts.data is false"]
-
+    hasData -> observe [label="no"]
+    hasComputed [
+        label="opts.computed"
+        shape=diamond
+    ]
+    initData -> hasComputed
+    observe -> hasComputed
     initComputed [
         label="initComputed(vm, opts.computed)"
     ]
-
-    initData -> initComputed
-    observe -> initComputed
-
+    hasComputed -> initComputed [label="yes"]
+    hasWatch [
+        label="opts.watch && opts.watch !== nativeWatch"
+        shape=diamond
+    ]
+    hasComputed -> hasWatch
+    initComputed -> hasWatch
     initWatch [
         label="initWatch(vm, opts.watch)"
     ]
-
-    initComputed -> initWatch [label="opts.watch && opts.watch !== nativeWatch"]
+    hasWatch -> initWatch [label="yes"]
 }

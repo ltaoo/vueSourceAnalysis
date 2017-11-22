@@ -1,81 +1,55 @@
 digraph G {
-    label="initInjections(vm)"
-
-    getResult [
-        label="result=resolveInjection(vm.$options.inject, vm)"
+    graph [
+        label="core/instance/inject.js"
+        fontcolor=blue
     ]
+
+    start [
+        label="initInjections(vm)"
+    ]
+
+    varResult [
+        label="const result=resolveInjection(vm.$options.inject, vm)"
+    ]
+    start -> varResult
+    result1 [
+        label="result"
+        shape=diamond
+    ]
+    varResult -> result1
     setShouldConvert [
         label="observerState.shouldConvert = false"
     ]
-    getResult -> setShouldConvert [label="result is true"]
+    result1 -> setShouldConvert [label="yes"]
 
     forKeys [
-        label="Object.keys(result).forEach()"
+        label="Object.keys(result).forEach(key => {"
     ]
 
     setShouldConvert -> forKeys
 
     subgraph cluster_for {
-        graph[style=dotted]
-        forKeys -> defineReactive
+        graph[
+            label=""
+            style=dotted
+        ]
+        notProduction [
+            label="process.env.NODE_ENV !== 'production'"
+            shape=diamond
+        ]
+        forKeys -> notProduction
+        defineReactive1 [
+            label="defineReactive(vm, key, result[key], () => {warn()})"
+        ]
+        notProduction -> defineReactive1 [label="yes"]
+        defineReactive2 [
+            label="defineReactive(vm, key, result[key])"
+        ]
+        notProduction -> defineReactive2 [label="no"]
     }
     resetShouldConvert [
         label="observerState.shouldConvert = true"
     ]
-    defineReactive -> resetShouldConvert
-
-    subgraph cluster_resolveRejection {
-        graph[style=dotted]
-        lable="resolveRejection(inject, vm)"
-
-        ifInject [
-            label="if(inject)"
-            shape=diamond
-        ]
-
-        getNewResult [
-            label="result = Object.create(null)"
-        ]
-        ifInject -> getNewResult [label="yes"]
-
-        getKeys [
-            label="keys = hasSymbol ? Reflect.ownKeys().filter() : Object.keys()"
-        ]
-
-        getNewResult -> getKeys
-
-        
-    }
-    subgraph cluster_walk {
-        graph[style=dotted]
-        label="for"
-
-        walkKeys [
-            label="for(let i = 0; i < keys.length; i += 1) {}"
-        ]
-        getKeys -> walkKeys
-        getProvideKey [
-            label="provideKey=inject[keys[i]].from"
-        ]
-        walkKeys -> getProvideKey
-
-        getSource [
-            label="source = vm"
-        ]
-
-        getProvideKey -> getSource
-    }
-    subgraph cluster_walkSource {
-        graph[style=dotted]
-
-        walkSource [
-            label="while(source)"
-        ]
-        getSource -> walkSource
-
-        setResult [
-            label="result[key] = source._provided[provideKey]"
-        ]
-        walkSource -> setResult [label="if (source._provided && provideKey in source._provided)"]
-    }
+    defineReactive1 -> resetShouldConvert
+    defineReactive2 -> resetShouldConvert
 }

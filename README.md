@@ -83,18 +83,31 @@ new Vue({
 
 所以这里就要深究`Dep`到底是什么，怎么工作的[3]
 
+### Dep
+
+注释是：
+> A dep is an observable that can have multiple directives subscribing to it.
+
+
+每个`Dep`实例有`subs`属性，保存了多个`Watcher`实例，在调用`dep.notify`方法时，会遍历该数组，对每个`Watcher`实例调用`update`方法。
+
+
 ### initInjections
 
 噢，完全不明白这个函数用来做什么，至今为止没有主动用到过`inject`这个配置项，到后面遇到的时候再回过头来看看吧。
 
 ![initInjections](./initInjections.png)
 
+
 ### initState
 
 终于到了我们最熟悉的地方，在`initState`函数内，会对`props`、`methods`、`data`、`computed`以及`watch`进行处理，对，就是我们在日常中最常用到的这些，都在`initState`函数内进行处理。
 
-由于代码量太多，所以又拆开来分析。
 ![initState](./initState.png)
+
+可以看到，先判断属性是否存在，然后依次调用
+
+- initProps
 
 #### initProps
 
