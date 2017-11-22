@@ -1,6 +1,6 @@
 digraph G {
     graph [
-        label="initState(vm)"
+        label="core/instance/state.js"
         fontcolor=blue
     ]
     start [

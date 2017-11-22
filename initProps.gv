@@ -1,146 +1,93 @@
 digraph G {
-    label="initProps(vm, opts.props)"
-
-    getPropsData [
-        label="propsData=vm.$options.propsData || {}"
+    graph [
+        label="core/instance/state.js"
+        fontcolor=blue
     ]
-
-    initProps [
-        label="props=vm._props={}"
+    start0 [
+        label="function initProps(vm, propsOptions) {"
     ]
-
-    getPropsData -> initProps
-
-    initKeys [
-        label="keys = vm.$options._propKeys = []"
+    varPropsData [
+        label="const propsData = vm.$options.propsData || {}"
     ]
-
-    initProps -> initKeys
-
-    // 判断是否是根节点
-    isRoot [
-        label="isRoot = !vm.$parent"
+    start0 -> varPropsData
+    varProps [
+        label="const props = vm._props = {}"
+        fontcolor=red
     ]
-
-    initKeys -> isRoot
+    varPropsData -> varProps
+    varKeys [
+        label="const keys = vm.$options._propKeys = []"
+    ]
+    varProps -> varKeys
+    varIsRoot [
+        label="const isRoot = !vm.$parent"
+    ]
+    varKeys -> varIsRoot
 
     setShoudConvert [
         label="observerState.shouldConvert = isRoot"
     ]
-
-    isRoot -> setShoudConvert
-
+    varIsRoot -> setShoudConvert
     walkPropsOptions [
         label="for (const key in propsOptions) {"
     ]
-
     setShoudConvert -> walkPropsOptions
-
     subgraph cluster_walk {
-        graph[style=dotted]
-
+        graph[
+            label=""
+            style=dotted
+        ]
         saveKey [
             label="keys.push(key)"
         ]
 
         walkPropsOptions -> saveKey
-
         validateProp [
-            label="value = validateProp(key, propsOptions, propsData, vm)"
+            label="const value = validateProp(key, propsOptions, propsData, vm)"
         ]
-
         saveKey -> validateProp
-        validateProp -> defineReactive
-
-        defineReactive -> proxy [label="!(keys[i] in vm)"]
+        notProduction [
+            label="process.env.NODE_ENV !== 'production'"
+            shape=diamond
+        ]
+        validateProp -> notProduction
+        varHyphenatedKey [
+            label="const hyphenatedKey = hyphenate(key)"
+        ]
+        notProduction -> varHyphenatedKey [label="yes"]
+        isReseve [
+            label="isReservedAttribute(hyphenatedKey) || config.isReservedAttr(hyphenatedKey)"
+            shape=diamond
+        ]
+        varHyphenatedKey -> isReseve
+        isReseve -> warn [label="yes"]
+        defineReactive0 [
+            label="defineReactive(props, key, value, () => {
+                if (vm.$parent && !isUpdatingChildComponent) {
+                    warn('...')
+                }
+            }"
+        ]
+        isReseve -> defineReactive0
+        warn -> defineReactive0
+        defineReactive [
+            label="defineReactive(props, key, value)"
+        ]
+        notProduction -> defineReactive [label="no"]
+        keyInVm [
+            label="!(key in vm)"
+            shape=diamond
+        ]
+        defineReactive0 -> keyInVm
+        defineReactive -> keyInVm
+        proxy0 [
+            label="proxy(vm, `_props`, key)"
+        ]
+        keyInVm -> proxy0 [label="yes"]
     }
-
     resetShouldConvert [
         label="observerState.shouldConvert = true"
     ]
-
-    proxy -> resetShouldConvert
-
-    subgraph cluster_validate {
-        graph[style=dotted]
-        label="validateProp(key, propsOptions, propsData, vm)"
-
-        getProp [
-            label="prop = propsOptions[key]"
-        ]
-        getValue [
-            label="value = propsData[key]"
-        ]
-
-        getProp -> getValue
-
-        handleBooleanType [
-            shape=diamond
-        ]
-
-        getValue -> handleBooleanType [label="isType(Boolean, prop.type)"]
-
-        // 处理 Boolean 类型
-        resetValueBeFalse [
-            label="value = false"
-        ]
-        resetValueBeTrue [
-            label="value = true"
-        ]
-
-        handleBooleanType -> resetValueBeFalse [label="absent && !hasOwn(prop, 'default')"]
-        handleBooleanType -> resetValueBeTrue [label="!isType(String, prop.type) && (value === '' || value === hyphenate(key))"]
-
-        getDefaultValue [
-            label="value = getPropDefaultValue(vm, prop, key)"
-        ]
-
-        resetValueBeFalse -> getDefaultValue [label="value === undefined"]
-        resetValueBeTrue -> getDefaultValue [label="value === undefined"]
-        getPrevShouldConvert [
-            label="prevShouldConvert = observerState.shouldConvert"
-        ]
-        getDefaultValue -> getPrevShouldConvert
-        resetShouldConvertBeTrue [
-            label="observerState.shouldConvert = true"
-        ]
-        getPrevShouldConvert -> resetShouldConvertBeTrue
-        observeValue [
-            label="observe(value)"
-        ]
-        resetShouldConvertBeTrue -> observeValue
-
-        resetShould [
-            label="observerState.shouldConvert = prevShouldConvert"
-        ]
-        observeValue -> resetShould
-        resetShould -> return
-    }
-
-    subgraph cluster_getDefaultProp {
-        graph[style=dotted]
-        label="getPropDefaultValue(vm, prop:propOptions, key)"
-
-        returnUndefined [
-            label="return undefined"
-        ]
-
-        start -> returnUndefined [label="!hasOwn(prop, 'default')"]
-
-        getDef [
-            label="def = prop.default"
-        ]
-
-        start -> getDef
-
-        returnPropsValue [
-            label="return vm._props[key]"
-        ]
-        getDef -> returnPropsValue [label="vm._props[key] !== undefined"]
-
-        callDef [
-            label="return def.call(vm) || def"
-        ]
-        getDef -> callDef [label="def is set"]
-    }
+    keyInVm -> resetShouldConvert
+    proxy0 -> resetShouldConvert
 }

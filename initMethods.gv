@@ -1,48 +1,65 @@
 digraph G {
-    label="initMethods(vm, opts.methods)"
-
-    getProps [
-        label="props = vm.$options.props"
+    graph [
+        label="core/instance/state.js"
+        fontcolor=blue
     ]
 
+    start [
+        label="initMethods(vm, methods)"
+    ]
+
+    varProps [
+        label="const props = vm.$options.props"
+    ]
+    start -> varProps
     walkMethods [
-        label="for(const key in methods)"
+        label="for(const key in methods) {"
     ]
-
-    getProps -> walkMethods
-
+    varProps -> walkMethods
     subgraph cluster_walk {
-        graph[style=dotted]
-
-        isProduction [
+        graph[
+            label=""
+            style=dotted
+        ]
+        notProduction [
             label="process.env.NODE_ENV !== 'production'"
             shape=diamond
         ]
-
-        walkMethods -> isProduction
+        walkMethods -> notProduction
         isNull [
             label="methods[key] === null"
             shape=diamond
         ]
-        isProduction -> isNull [label="yes"]
-
+        notProduction -> isNull [label="yes"]
+        warn0 [
+            label="warn()"
+        ]
+        isNull -> warn0 [label="yes"]
         methodIsProp [
             label="props && hasOwn(props, key)"
             shape=diamond
         ]
-        isProduction -> methodIsProp [label="yes"]
+        isNull -> methodIsProp
+        warn0 -> methodIsProp
+        warn1 [
+            label="warn()"
+        ]
+        methodIsProp -> warn1 [label="yes"]
         isReserved [
             label="(key in vm) && isReserved(key)"
             shape=diamond
         ]
-        isProduction -> isReserved [label="yes"]
-        isNull -> warn [label="yes"]
-        methodIsProp -> warn [label="yes"]
-        isReserved -> warn [label="yes"]
-
+        methodIsProp -> isReserved
+        warn1 -> isReserved
+        warn2 [
+            label="warn()"
+        ]
+        isReserved -> warn2 [label="yes"]
         bindMethod [
             label="vm[key] = methods[key] == null ? noop : bind(methods[key], vm)"
         ]
-        isProduction -> bindMethod [label="no"]
+        warn2 -> bindMethod
+        isReserved -> bindMethod
+        notProduction -> bindMethod
     }
 }

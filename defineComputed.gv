@@ -1,0 +1,133 @@
+digraph G {
+    graph [
+        label="core/instance/state.js"
+        fontcolor=blue
+    ]
+    start [
+        label="function defineComputed(target, key, userDef)"
+    ]
+    shouldCache [
+        label="const shouldCache = !isServerRendering()"
+    ]
+    start -> shouldCache
+    userDefIsFunction [
+        label="typeof userDef === 'function'"
+        shape=diamond
+    ]
+    shouldCache -> userDefIsFunction
+    createComputedGetter [
+        label="sharedPropertyDefinition.get = createComputedGetter(key)"
+    ]
+    shouldCache1 [
+        label="shouldCache"
+        shape=diamond
+    ]
+    userDefIsFunction -> shouldCache1 [label="yes"]
+    shouldCache1 -> createComputedGetter [label="yes"]
+    setGet [
+        label="sharedPropertyDefinition.get = userDef"
+    ]
+    shouldCache1 -> setGet [label="no"]
+
+    setSet0 [
+        label="sharedPropertyDefinition.set = noop"
+    ]
+    createComputedGetter -> setSet0
+    setGet -> setSet0
+    userGetExist [
+        label="userDef.get"
+        shape=diamond
+    ]
+    userDefIsFunction -> userGetExist [label="no"]
+
+    setGetBeNoop [
+        label="sharedPropertyDefinition.get = noop"
+    ]
+    userGetExist -> setGetBeNoop [label="no"]
+
+    cache [
+        label="shouldCache && userDef.cache !== false"
+        shape=diamond
+    ]
+    userGetExist -> cache [label="yes"]
+    setGet1 [
+        label="sharedPropertyDefinition.get = createComputedGetter(key)"
+    ]
+    cache -> setGet1 [label="yes"]
+    setGet2 [
+        label="sharedPropertyDefinition.get = userDef.get"
+    ]
+    cache -> setGet2 [label="no"]
+
+    setSet1 [
+        label="sharedPropertyDefinition.set = userDef.set ? userDef.set : noop"
+    ]
+    setGet1 -> setSet1
+    setGet2 -> setSet1
+    setGetBeNoop -> setSet1
+    notProduction [
+        label="process.env.NODE_ENV !== 'production' && sharedPropertyDefinition.set === noop"
+        shape=diamond
+    ]
+    setSet0 -> notProduction
+    setSet1 -> notProduction
+    setSet2 [
+        label="sharedPropertyDefinition.set = function () { warn()}"
+    ]
+    notProduction -> setSet2 [label="yes"]
+    def [
+        label="Object.defineProperty(target, key, sharedPropertyDefinition)"
+    ]
+    setSet2 -> def
+    notProduction -> def
+
+    // subgraph cluster_createComputedGetter {
+    //     graph[style=dotted]
+
+    //     label="createComputedGetter(key)"
+
+    //     returnFunc [
+    //         label="return function computedGetter () {"
+    //     ]
+    // }
+
+    // subgraph cluster_computedGetter {
+    //     graph[style=dotted]
+
+    //     getWatcher [
+    //         label="watcher = this._computedWatchers && this._computedWatchers[key]"
+    //     ]
+
+
+    //     watcherExist [
+    //         label="watcher"
+    //         shape=diamond
+    //     ]
+    //     getWatcher -> watcherExist
+
+    //     watcherIsDirty [
+    //         label="watcher.dirty"
+    //         shape=diamond
+    //     ]
+    //     watcherExist -> watcherIsDirty [label="yes"]
+
+    //     evaluate [
+    //         label="watcher.evaluate()"
+    //     ]
+    //     watcherIsDirty -> evaluate [label="yes"]
+
+    //     depTarget [
+    //         label="Dep.target"
+    //         shape=diamond
+    //     ]
+    //     depend [
+    //         label="warcher.depend()"
+    //     ]
+    //     watcherExist -> depTarget [label="yes"]
+    //     depTarget -> depend [label="yes"]
+    //     evaluate -> return
+    //     depend -> return
+    //     depTarget -> return
+    //     watcherIsDirty -> return
+    // }
+}
