@@ -1,33 +1,54 @@
 digraph G {
-    label="Vue.prototype.$mount(el, hydrating)"
+    graph [
+        label="platforms/web/entry-runtime-with-compiler.js"
+        fontcolor=blue
+    ]
+
+    start [
+        label="Vue.prototype.$mount = function (el, hydrating) {"
+    ]
 
     resetEl [
         label="el = el || query(el)"
     ]
-
-    getOptions [
-        label="options = this.$options"
-    ]
-
-    resetEl -> getOptions
-
-    renderExist [
-        label="options.render"
+    start -> resetEl
+    isBody [
+        label="el === document.body || el === document.documentElement"
         shape=diamond
     ]
-
-    getOptions -> renderExist
-
-    getTemplate [
-        label="template = options.template"
+    resetEl -> isBody
+    notProduction [
+        label="process.env.NODE_ENV !== 'production'"
+        shape=diamond
     ]
-    renderExist -> getTemplate [label="yes"]
-
+    isBody -> notProduction [label="yes"]
+    warn0 [
+        label="warn()"
+    ]
+    notProduction -> warn0 [label="yes"]
+    returnThis [
+        label="return this"
+    ]
+    notProduction -> returnThis
+    warn0 -> returnThis
+    varOptions [
+        label="const options = this.$options"
+    ]
+    isBody -> varOptions
+    renderExist [
+        label="!options.render"
+        shape=diamond
+    ]
+    varOptions -> renderExist
+    varTemplate [
+        label="let template = options.template"
+    ]
+    renderExist -> varTemplate [label="yes"]
     templateExist [
         label="template"
         shape=diamond
     ]
-    getTemplate -> templateExist
+    varTemplate -> templateExist
     templateIsString [
         label="typeof template === 'string'"
         shape=diamond
@@ -59,7 +80,7 @@ digraph G {
     tempIsNode -> warn [label="no"]
 
     elExist [
-        label="else if (el)"
+        label="el"
         shape=diamond
     ]
     resetTempIsOut [
@@ -78,7 +99,12 @@ digraph G {
     resetTempIsOut -> templateExist1
 
     getRenderAndFunc [
-        label="const { render, staticRenderFns } = compileToFunctions("
+        label="const { render, staticRenderFns } = compileToFunctions(template, {
+            shouldDecodeNewlines,
+            shouldDecodeNewlinesForHref,
+            delimiters: options.delimiters,
+            comments: options.comments
+        }, this)"
     ]
 
     templateExist1 -> getRenderAndFunc

@@ -112,10 +112,14 @@ digraph G {
     ]
     callBeforeCreateHook -> initInjections
 
+    initState [
+        label="initState(vm)"
+    ]
+    initInjections -> initState
     initProvide [
         label="initProvide(vm)"
     ]
-    initInjections -> initProvide
+    initState -> initProvide
     callCreatedHook [
         label="callHook(vm, 'created')"
         color=green

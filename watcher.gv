@@ -1,0 +1,118 @@
+digraph G {
+    graph [
+        label="core/observer/wathcer.js"
+        fontcolor=blue
+    ]
+    start [
+        label="class Watcher {"
+    ]
+    constructor [
+        label="constructor(vm, expOrFn, cb, options)"
+    ]
+    start -> constructor
+    setVm [
+        label="this.vm = vm"
+    ]
+    constructor -> setVm
+    options [
+        label="options"
+        shape=diamond
+    ]
+    setVm -> options
+    setDeep [
+        label="this.deep = !!options.deep"
+    ]
+    options -> setDeep [label="yes"]
+    setUser [
+        label="this.user = !!options.user"
+    ]
+    setDeep -> setUser
+    setLazy [
+        label="this.lazy = !!options.lazy"
+    ]
+    setUser -> setLazy
+    setSync [
+        label="this.sync = !!options.sync"
+    ]
+    setLazy -> setSync
+    setAll [
+        label="this.deep = this.user = this.lazy = this.sync = false"
+    ]
+    options -> setAll [label="no"]
+
+    setCb [
+        label="this.cb = cb"
+    ]
+    setSync -> setCb
+    setAll -> setCb
+    setId [
+        label="this.id = ++uid"
+    ]
+    setCb -> setId
+    setActive [
+        label="this.active = true"
+    ]
+    setId -> setActive
+    setDirty [
+        label="this.dirty = this.lazy"
+        color=red
+    ]
+    setActive -> setDirty
+    setDeps [
+        label="this.deps = []"
+    ]
+    setDirty -> setDeps
+    setNewDeps [
+        label="this.newDeps = []"
+    ]
+    setDeps -> setNewDeps
+    setDepIds [
+        label="this.depIds = new Set()"
+    ]
+    setNewDeps -> setDepIds
+    setNewDepIds [
+        label="this.newDepIds = new Set()"
+    ]
+    setDepIds -> setNewDepIds
+    setExpress [
+        label="this.expression = process.env.NODE_ENV !== 'production' ? expOrFn.toString() : ''"
+    ]
+    setNewDepIds -> setExpress
+    expIsFunc [
+        label="typeof expOrFn === 'function"
+        shape=diamond
+    ]
+    setExpress -> expIsFunc
+    setGetter [
+        label="this.getter = expOrFn"
+    ]
+    expIsFunc -> setGetter [label="yes"]
+    parsePath [
+        label="this.getter = parsePath(expOrFn)"
+    ]
+    expIsFunc -> parsePath [label="no"]
+    getterNotExist [
+        label="!this.getter"
+        shape=diamond
+    ]
+    parsePath -> getterNotExist
+    setGetter1 [
+        label="this.getter = function () {}"
+    ]
+    getterNotExist -> setGetter1 [label="yes"]
+    notProduction [
+        label="process.env.NODE_ENV !== 'production'"
+        shape=diamond
+    ]
+    setGetter1 -> notProduction
+    warn0 [
+        label="warn()"
+    ]
+    notProduction -> warn0 [label="yes"]
+
+    setValue [
+        label="this.value = this.lazy ? undefined : this.get()"
+    ]
+    setGetter -> setValue
+    getterNotExist -> setValue
+}

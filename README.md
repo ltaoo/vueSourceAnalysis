@@ -176,107 +176,6 @@ const sharedPropertyDefinition = {
 
 ![defineComputed.png](./defineComputed.png)
 
-##### 实例
-
-其实`computed`一直对我来说是很神奇的存在，比如这样的代码：
-
-```javascript
-new Vue({
-	el: '#app',
-	template: '<div><input v-model="name" />{{message}}</div>',
-	data() {
-		return {
-			name: 'ltaoo',
-			nickname: 'something',
-		};
-	},
-	computed: {
-		message() {
-			return 'Hello ' + this.name; 
-		},
-	},
-})
-```
-
-当改变输入框内的值时，对应的`message`也会改变。
-
-我好奇的是，为什么知道`name`变化的时候要调用`message`获取新的值？
-
-从上面的源码来看，显示实例化了一个`watcher`保存到`vm._computedWatchers`上，而`Watcher`构造函数内，将`this`存放到`vm.watchers`里面。
-
-然后断点会到`defineComputed`里面，然后再到`createComputedGetter('message')`这个函数，这个函数返回了一个函数`computedGetter`。
-
-```javascript
-function createComputedGetter (key) {
-  return function computedGetter () {
-    const watcher = this._computedWatchers && this._computedWatchers[key]
-    if (watcher) {
-      if (watcher.dirty) {
-        watcher.evaluate()
-      }
-      if (Dep.target) {
-        watcher.depend()
-      }
-      return watcher.value
-    }
-  }
-}
-```
-
-所以`message`这个`key`的`getter`实际上就是`computedGetter`这个函数了，在获取`message`的时候，就会调用它。（初始化时调用`render`也会触发这个函数的调用，以获取`message`值显示在页面上。）
-
-额，我们知道，在`initComputed`内实例化的`watcher`存放在了`vm._computedWatchers`上，`computedGetter`函数内`取出了这个`watcher`，判断是否`dirty`
-
-`dirty === true`所以会调用`evaluate()`，然后会调用`message`拿到值，但此时这个值就已经是`ltaoo1`了！
-
-或者再看看这个组件吧：
-
-```
-(function() {
-    with (this) {
-        return _c('div', [
-            _c('input', {
-                directives: [
-                    {
-                        name: 'model',
-                        rawName: 'v-model',
-                        value: name,
-                        expression: 'name',
-                    },
-                ],
-                domProps: { value: name },
-                on: {
-                    input: function($event) {
-                        if ($event.target.composing) return;
-                        name = $event.target.value;
-                    },
-                },
-            }),
-            _v(_s(message)),
-        ]);
-    }
-});
-```
-`with`用以延长作用域链，所以`_c`实际上是`this._c`，其他同理。
-`_s === toString`，`_v === createTextVNode`，都和`message`没关系，还是不知道为什么`message`会改变。
-
-其实是`name`改变后，会调用`render`重新计算`vnode`，导致的`message`改变？
-
-但是虽然断点会到`computedGetter`这里，表示的确有去取`message`这个变量，但是在去的过程中，`watcher.dirty === false`，所以不调用`message`这个函数，导致`message`值并没有发生改变。
-
-但为什么`watcher.dirty === false`而之前会是`true`呢？
-
-因为调用了`update`，为什么`watcher`上的`update`会被调用呢？
-
-因为`name`值发生了改变，调用了对应的`setter`，在`setter`内会调用`dep.notify`，该方法会遍历自身`deps`，调用`dep.update`，什么时候`dep`被加到`name`的`deps`上？
-
-在第一次渲染`vnode`的时候，要获取到`message`的值，要会触发`computedGetter`，此时`watcher.dirty === true`（因为在初始化的时候`dirty === lazy`，而`computed`对应的`watcher`就是`lazy`），所以会调用`evaluate`，在这个方法内，调用了`watcher.get()`，在`get`方法内，会将`Dep.target = watcher`，然后调用`message`函数，由于函数内要获取`this.name`，所以就会触发`name`的`getter`，而在`getter`内，判断`Dep.target`是否存在，如果存在，就将`Dep.target`放到闭包内的`dep.subs`上。
-
-所以，就实现了依赖关系。
-
-> 所以要尽量避免`computed`对应的函数内有无关的取值。
-
-
 #### initWatch
 
 
@@ -300,93 +199,98 @@ function createComputedGetter (key) {
 ## $mount
 OK，终于完成了初始化，到目前为止都是平台无关的，接下来就和运行的平台有关了，所以是分为了`web`与`weex`两个不同的`$mount`实现，当然这里只会分析`web`端的实现，这部分的入口在`vue/platforms/web/entry-runtime-with-compiler.js`。
 
-开始吧！
+在这之前，先看看最终得到的`vm`是什么样，额，由于存在自引用导致无法打印，所以就打印可遍历的属性看看吧：
 
-在这个函数内，主要是对`el`、`template`做处理，需要将这两个转换为`render`函数，当然如果已经有`render`函数，会忽略上面两个。
+```json
+[
+  "_uid",
+  "_isVue",
+  "$options",
+  "_renderProxy",
+  "_self",
+  "$parent",
+  "$root",
+  "$children",
+  "$refs",
+  "_watcher",
+  "_inactive",
+  "_directInactive",
+  "_isMounted",
+  "_isDestroyed",
+  "_isBeingDestroyed",
+  "_events",
+  "_hasHookEvent",
+  "_vnode",
+  "$vnode",
+  "$slots",
+  "$scopedSlots",
+  "_c",
+  "$createElement",
+  "$attrs",
+  "$listeners",
+  "_watchers",
+  "_data",
+  "age",
+  "name",
+  "_computedWatchers",
+  "message"
+]
+```
+大部分还是有印象的。
 
-由于存在“编译”，所以还是很复杂，主要逻辑在`compileToFunctions`函数内。
+好，开始`mount`吧。
+在这个函数内，主要是对`el`、`template`做处理，需要将这两个转换为`render`函数，如果已经有`render`函数，会忽略`template`。
 
 ![mount](./mount.png)
 
-### compile
-
-额，先来说说`compile`，因为`compileToFunctions`是调用`createCompileToFunctionsFn`时传入`compile`得到的。
-
-![compile](./compile.png)
-
-### createCompileToFunctionFn
-
-其实就是返回了`compileToFunctions`这个函数，额外的处理就是多了`cache`闭包，能够缓存一些重复的编译工作？
-
-重点还是`compileToFunctions`函数：
-
-### compileToFunctions
-
-调用了传进来的`compile`，就是上面那个函数得到了`compiled`变量，再调用`createFunction`并传入了`compile.render`就得到了`render`函数。
-
-![createCompileToFunctionsFn](./createCompileToFunctionsFn.png)
-
-### baseCompile
-
-噢，虽然知道了`options.render`函数是调用`compileToFunction`得到，而在这个函数里面实际是调用了`createFunction`并传入`compile.render`得到的，与之对应的`compiled.render`又是通过调用`compile`得到的，但最最最内部，实际还是调用的`baseCompile`对`template`解析得到一切。
-
-而这个`baseCompile`是在调用`createCompilerCreator`函数时传入的，所以说，其实是可以定制化核心的那个编译器？
-
-编译器做的事情看起来蛮简单的，
-
-- 1、ast = parse(template, options)
-- 2、optimize(ast, options)
-- 3、code = generate(ast, options)
-
-所以又要拆开来看了
-
-#### parse
-
-太复杂了。。。。就是语法分析生成`AST`那一套，可能由于还要处理自定义指令，模板等所以更复杂？
-
-暂时还是不看了，`optimize`也是比较复杂，最后`generate`稍微简单一些。
-
-#### generate
-
-会根据传入的`ast`判断生成何种类型的节点，组件、原生DOM 亦或者是 if for 之类的处理？
-
-不过最终其实只是拼接成了`_c(componentName)`这种形式，所以我们看到的每一个组件都是这样的，这里得到字符串，然后使用`new Function`得到函数，最后挂载到了`options.render`上。
-
-![generate](./generate.png)
+如果使用`template`，就会存在编译的过程，我们无需关心编译，只关心编译后的结果，很明显编译后的和我们自己声明的`render`函数应该是一样的格式。
 
 ### mountComponent
 
-有趣的是，貌似是先在`runtime/index.js`里面声明了`$mount`方法，然后又在`entry-runtime-with-compiler.js`保存了一下，然后覆盖。
+有趣的是，是先在`runtime/index.js`里面声明了`$mount`方法，然后又在`entry-runtime-with-compiler.js`保存了一下，然后覆盖。
 
 这就导致了，完成编译后，会调用`runtime/index.js`的`mount`方法，其实就是调用`mountComponent`方法。
+
+就不画流程图直接上代码了：
+
+```javascript
+Vue.prototype.$mount = function (
+  el?: string | Element,
+  hydrating?: boolean
+): Component {
+  el = el && inBrowser ? query(el) : undefined
+  return mountComponent(this, el, hydrating)
+}
+```
+
+那在`mountComponent`内又做了什么呢？
 
 - vm.$el = el
 - vm._watcher = new Watcher()
 - vm._isMounted = true
 
+从调用的生命周期钩子来看，就是完成了节点的渲染并插入页面，但是好像并没有调用什么`render`之类的函数呀？唯一调用的就是`new Watcher()`。
+
 ![mountComponent](./mountComponent.png)
 
-由于存在两个组件，所以会触发两次`mountComponent`，在第二次断点的时候，会从`new Watcher()`到`updateComponent`这个函数里面来，所以要先看看`new Watcher()`到底做了啥。
 
-最后有这么一段代码：
+### Watcher
+
+`Watcher`是`Vue`最核心的一个类，控制着数据是否要更新，以及如何更新。
+![Watcher](./watcher.png)
+可以看到，`watcher`实例上也有非常多的属性，最重要的是`dirty`这个，当`dirty === true`，表示要重新获取值。实例化的过程就是一些赋值，重点在最后的一句：
 
 ```javascript
 this.value = this.lazy ? undefined : this.get()
 ```
 
-意思就是说，在实例化`watcher`的时候，如果不是`lazy`，就会立刻去获取值放到`watcher.value`上。而`this.get()`重点是这段：
+即如果配置了该`watcher`是`lazy`，即延迟获取数据，在实例化的时候就不会去获取值，暂时看到`computed`对应的`watcher`是设置了`lazy === true`的。
 
-```javascript
-value = this.getter.call(vm, vm)
-```
+至少在上面`mountComponent`时是要去获取值的，OK，那具体怎么获取值呢？
 
-噢，又到了`this.getter`这个函数，而这个函数却是实例化`watcher`时传入的第二个参数！实际上就是我们在`mountComponent`中声明的`updateComponent`函数！
+#### Watcher.prototype.get
 
-所以接下来就是调用
 
-```javascript
-vm._update(vm._render(), hydrating)
-```
 
 ### vm._render
 

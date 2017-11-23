@@ -1,45 +1,74 @@
 digraph G {
-    label="mountComponent(vm, el, hydrating)"
-
+    graph [
+        label="core/instance/lifecycle.js"
+        fontcolor=blue
+    ]
+    start [
+        label="function mountComponent(vm, el, hydrating) {"
+    ]
     setEl [
         label="vm.$el = el"
+        fontcolor=red
     ]
-
-    renderExist [
-        label="vm.$options.render"
+    start -> setEl
+    renderNotExist [
+        label="!vm.$options.render"
         shape=diamond
     ]
-
-    setEl -> renderExist
+    setEl -> renderNotExist
     setRender [
         label="vm.$options.render = createEmptyVNode"
     ]
-    renderExist -> setRender [label="no"]
-
+    renderNotExist -> setRender [label="yes"]
+    notProduction [
+        label="process.env.NODE_ENV !== 'production'"
+        shape=diamond
+    ]
+    setRender -> notProduction
+    end [
+        label="(vm.$options.template && vm.$options.template.charAt(0) !== '#') || vm.$options.el || el"
+        shape=diamond
+    ]
+    notProduction -> end [label="yes"]
+    warn0 [
+        label="warn()"
+    ]
+    end -> warn0 [label="yes"]
+    warn1 [
+        label="warn()"
+    ]
+    end -> warn1 [label="no"]
     callBeforeMountedHook [
         label="callHook(vm, 'beforeMounted')"
+        color=green
+        fontcolor=green
     ]
-    setRender -> callBeforeMountedHook
-    renderExist -> callBeforeMountedHook
+    notProduction -> callBeforeMountedHook
+    renderNotExist -> callBeforeMountedHook
 
     varUpdateComponent [
         label="let updateComponent"
     ]
-
     callBeforeMountedHook -> varUpdateComponent
     isProduction [
         label="process.env.NODE_ENV !== 'production' && config.performance && mark"
         shape=diamond
     ]
-
     varUpdateComponent -> isProduction
-
+    todo [
+        label="..."
+    ]
+    isProduction -> todo [label="yes"]
     resetComponent [
-        label="updateComponent = () => vm._update(vm._render(), hydrating)"
+        label="updateComponent = () => {
+            const vnode = vm._render();
+            vm._update(vnode, hydrating)
+        }"
     ]
     isProduction -> resetComponent [label="no"]
     initWatcher [
         label="vm._watcher = new Watcher(vm, updateComponent, noop)"
+        fontcolor=red
     ]
     resetComponent -> initWatcher
     setHydrating [
@@ -55,15 +84,19 @@ digraph G {
     setHydrating -> vnodeIsNull
     setMounted [
         label="vm._isMounted = true"
+        fontcolor=red
     ]
-    vnodeIsNull -> setMounted
+    vnodeIsNull -> setMounted [label="yes"]
     callMountedHook [
         label="callHook(vm, 'mounted')"
+        color=green
+        fontcolor=green
     ]
     setMounted -> callMountedHook
     returnVm [
         label="return vm"
     ]
+    vnodeIsNull -> returnVm
     callMountedHook -> returnVm
 
 }
