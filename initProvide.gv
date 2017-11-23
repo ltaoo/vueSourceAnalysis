@@ -1,28 +1,34 @@
 digraph G {
-    label="initProvide(vm)"
-
-    getProvide [
-        label="provide = vm.$options.provide"
+    graph [
+        label="core/instance/inject.js"
+        fontcolor=blue
+    ]
+    start [
+        label="function initProvide(vm) {"
     ]
 
+    varProvide [
+        label="const provide = vm.$options.provide"
+    ]
+    start -> varProvide
     provideExist [
         label="provide"
         shape=diamond
     ]
-    getProvide -> provideExist
-
+    varProvide -> provideExist
     provideIsFn [
         label="typeof provide === 'function'"
         shape=diamond
     ]
-
     provideExist -> provideIsFn [label="yes"]
 
     setProvide0 [
         label="vm._provide = provide.call(vm)"
+        fontcolor=red
     ]
     setProvide1 [
         label="vm._provide = provide"
+        fontcolor=red
     ]
 
     provideIsFn -> setProvide0 [label="yes"]

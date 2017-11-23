@@ -56,7 +56,7 @@ digraph G {
     ]
     setIsVue -> isComponent
 
-    isComponent -> initInternalComponent [label="yes" style=dotted]
+    isComponent -> initInternalComponent [label="yes"]
     setOptions [
         label="vm.$options = mergeOptions(
         resolveConstructorOptions(vm.constructor),

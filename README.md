@@ -94,7 +94,9 @@ new Vue({
 
 ### initInjections
 
-噢，完全不明白这个函数用来做什么，至今为止没有主动用到过`inject`这个配置项，到后面遇到的时候再回过头来看看吧。
+[provide/inject](https://cn.vuejs.org/v2/api/#provide-inject)
+
+> provide 和 inject 主要为高阶插件/组件库提供用例。并不推荐直接用于应用程序代码中。
 
 ![initInjections](./initInjections.png)
 
@@ -277,20 +279,26 @@ function createComputedGetter (key) {
 
 #### initWatch
 
-初始化监听，很简单，遍历`watch`并给每个键调用`createWatcher`，而在`createWatcher`中其实就是调用了`vm.$watch`，而在`vm.$watch`中，其实最终还是实例化`Watcher`。
 
 ![initWatch](./initWatch.png)
 
+遍历`watch`并给每个键调用`createWatcher`，
+
+![createWatcher](./createWatcher.png)
+而在`createWatcher`中其实就是调用了`vm.$watch`，
+![VuePrototypeWatch](./prototypeWatch.png)
+而在`vm.$watch`中，其实最终还是实例化`Watcher`。
+
 ### initProvide
 
-只是添加了`vm._provide`这一个属性。
+只是添加了`vm._provide`这一个属性，和上面的`inject`配合使用。
 
 ![initProvide](./initProvide.png)
 
+调用该方法后，就完成了`create`，这么看来似乎是`vm`的创建。
+
 ## $mount
-
-
-OK，前面终于完成了初始化，到目前为止都是平台无关的，接下来就和运行的平台有关了，所以是分为了`web`与`weex`两个不同的`$mount`实现，当然这里只会分析`web`端的实现，这部分的入口在`vue/platforms/web/entry-runtime-with-compiler.js`。
+OK，终于完成了初始化，到目前为止都是平台无关的，接下来就和运行的平台有关了，所以是分为了`web`与`weex`两个不同的`$mount`实现，当然这里只会分析`web`端的实现，这部分的入口在`vue/platforms/web/entry-runtime-with-compiler.js`。
 
 开始吧！
 

@@ -1,0 +1,51 @@
+digraph G {
+    graph[
+        label="core/instance/state.js"
+        style=dotted
+    ]
+    start [
+        label="Vue.prototype.$watch = function (expOrFn, cb, options) {"
+    ]
+
+    varVm [
+        label="const vm = this"
+    ]
+    start -> varVm
+    cbIsObj [
+        label="isPlainObject(cb)"
+        shape=diamond
+    ]
+    varVm -> cbIsObj
+    returnWatcher [
+        label="return createWatcher(vm, expOrFn, cb, options)" 
+    ]
+    cbIsObj -> returnWatcher [label="yes"]
+    resetOptions [
+        label="options = options || {}"
+    ]
+    cbIsObj -> resetOptions
+    setUser [
+        label="options.user = true"
+    ]
+    resetOptions -> setUser
+    varWatcher [
+        label="const watcher = new Watcher(vm, expOrFn, cb, options)"
+    ]
+    setUser -> varWatcher
+    isImmediate [
+        label="options.immediate"
+        shape=diamond
+    ]
+    varWatcher -> isImmediate
+    call [
+        label="cb.call(vm, watcher.value)"
+    ]
+    isImmediate -> call [label="yes"]
+    returnFn [
+        label="rreturn function unwatchFn () {
+        watcher.teardown()
+        }"
+    ]
+    call -> returnFn
+    isImmediate -> returnFn
+}

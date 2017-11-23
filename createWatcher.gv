@@ -1,0 +1,38 @@
+digraph G {
+    graph [
+        label="core/instance/state.js"
+        fontcolor=blue
+    ]
+    start [
+        label="function createWatcher(vm, keyOrFn, handler, options) {" 
+    ]
+    isObject [
+        label="isPlainObject(handler)"
+        shape=diamond
+    ]
+    start -> isObject
+    resetOptions [
+        label="options = handler;"
+    ]
+    resetHandler [
+        label="handler = handler.handler"
+    ]
+    isObject -> resetOptions [label="yes"]
+    resetOptions -> resetHandler
+    handlerIsString [
+        label="typeof handler === 'string'"
+        shape=diamond
+    ]
+    isObject -> handlerIsString
+    resetHandler -> handlerIsString
+    resetHandler0 [
+        label="handler = vm[handler]"
+    ]
+    handlerIsString -> resetHandler0 [label="yes"]
+
+    return [
+        label="return vm.$watch(keyOrFn, handler, options)"
+    ]
+    handlerIsString -> return
+    resetHandler0 -> return
+}
