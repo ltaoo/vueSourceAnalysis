@@ -1,21 +1,24 @@
 digraph G {
-    label="Vue.prototype._render = function () {}"
+    graph [
+        label="core/instance/render.js"
+        fontcolor=blue
+    ]
+    start [
+        label="Vue.prototype._render = function () {}"
+    ]
     varVm [
         label="const vm = this"
     ]
+    start -> varVm
     varRender [
         label="const { render, _parentVnode } = vm.$options"
     ]
     varVm -> varRender
-
     vmIsMounted [
         label="vm._isMounted"
         shape=diamond
     ]
-
     varRender -> vmIsMounted
-
-
     vmIsMounted -> walkSlots [label="yes"]
     subgraph cluster_walk {
         graph[style=dotted]
@@ -40,12 +43,14 @@ digraph G {
     }
     setScopeSlots [
         label="vm.$scopedSlots = (_parentVnode && _parentVnode.data.scopedSlots) || emptyObject"
+        fontcolor=red
     ]
     vmIsMounted -> setScopeSlots
     cloneNode -> setScopeSlots
 
     setVnode [
         label="vm.$vnode = _parentVnode"
+        fontcolor=red
     ]
     setScopeSlots -> setVnode
     varNode [
@@ -66,6 +71,9 @@ digraph G {
         shape=diamond
     ]
     isInstance -> notProduction [label="yes"]
+    warn [
+        label="warn()"
+    ]
     notProduction -> warn [label="yes"]
     resetVnode [
         label="vnode = createEmptyVNode()"

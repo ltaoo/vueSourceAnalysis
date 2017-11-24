@@ -1,6 +1,11 @@
 digraph G {
-    label="patch(oldVnode, vnode, hydrating, removeOnly, parentElm, refElm)"
-
+    graph [
+        label="core/vdom/patch.js"
+        fontcolor=blue
+    ]
+    start [
+        label="function patch(oldVnode, vnode, hydrating, removeOnly, parentElm, refElm) {"
+    ]
     vnodeIsUndef [
         label="isUndef(vnode)"
         shape=diamond
@@ -12,6 +17,8 @@ digraph G {
     vnodeIsUndef -> oldVnodeIsUndef [label="yes"]
     invoke [
         label="invokeDestroyHook(oldVnode)"
+        color=green
+        fontcolor=green
     ]
     oldVnodeIsUndef -> invoke [label="yes"]
     end [

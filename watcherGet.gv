@@ -1,0 +1,76 @@
+digraph G {
+    graph [
+        label="core/observer/watcher.js"
+        fontcolor=blue
+    ]
+
+    start [
+        label="Watcher.prototype.get = function () {"
+    ]
+    pushTarget [
+        label="pushTarget(this)"
+    ]
+    start -> pushTarget
+    varValue [
+        label="let value"
+    ]
+    pushTarget -> varValue
+    varVm [
+        label="const vm = this.vm"
+    ]
+    varValue -> varVm
+    try [
+        label="try"
+    ]
+    varVm -> try
+    resetValue [
+        label="value = this.getter.call(vm, vm)"
+    ]
+    try -> resetValue
+    returnValue [
+        label="return value"
+    ]
+    catch [
+        label="catch(e) {"
+    ]
+    resetValue -> catch
+    user [
+        label="this.user"
+        shape=diamond
+    ]
+    catch -> user
+    handleError [
+        label="handleError(e, vm, `getter for watcher \"${this.expression}\"`)"
+    ]
+    user -> handleError [label="yes"]
+    throwE [
+        label="throw e"
+    ]
+    user -> throwE [label="no"]
+    finally [
+        label="finally"
+    ]
+    resetValue -> finally
+    throwE -> finally
+    handleError -> finally
+
+    deep [
+        label="this.deep"
+        shape=diamond
+    ]
+    finally -> deep
+    traverse [
+        label="traverse(value)"
+    ]
+    deep -> traverse [label="yes"]
+    popTarget [
+        label="popTarget"
+    ]
+    traverse -> popTarget
+    deep -> popTarget
+    clean [
+        label="this.cleanupDeps()"
+    ]
+    popTarget -> clean
+    clean -> returnValue
+}

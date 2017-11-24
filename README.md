@@ -290,6 +290,18 @@ this.value = this.lazy ? undefined : this.get()
 
 #### Watcher.prototype.get
 
+![watcher.prototyp.eget](./watcherGet.png)
+
+其实就是调用了`this.getter`，也就是在实例化`Watcher`时传入的第二个参数，在`mountComponent`中就是`updateComponent`函数。
+
+```javascript
+updateComponent = () => {
+    const vnode = vm._render();
+    vm._update(vnode, hydrating)
+}
+```
+
+首先获取`vnode`，然后根据`vnode`更新`DOM`，如果没猜错应该是这样。
 
 
 ### vm._render
@@ -300,7 +312,7 @@ this.value = this.lazy ? undefined : this.get()
 
 - vm.$vnode = _parentVnode
 
-`render`函数是由模板解析得到的，我们直接查看下`vnode`到底是什么
+`render`函数是由模板解析得到的或者我们直接声明的，我们先看下`vnode`到底是什么
 
 ```javascript
 vnode = VNode {
@@ -349,32 +361,24 @@ vnode = VNode {
 
 ![Vue.prototype._render](./prototypeRender.png)
 
+
 ### vm._update
 
-顾名思义，更新实例。
+这里重点是调用了`vm.__patch__`这个函数，先不说这个函数从哪里来。可以看到这个函数调用的结果赋给了`vm.$el`，这很明显表示`__patch__`调用后的结果是得到`DOM`元素。
+而且可以看到有做`prevVnode`是否存在的判断，如果存在则表示这次`__patch__`是进行更新，否则就是初始化`$el`。
 
-如果是初始化就在调用`patch`时传入不同的参数。如果是更新，就只传入`prevVnode`和`vnode`，如果父节点是`HOC`？就更新父节点的内容`（vm.$parent.$el = vm.$el）`。
+函数最后面，如果父节点是`HOC`？就更新父节点的内容`（vm.$parent.$el = vm.$el）`。
 
 ![Vue.prototype._update](./prototypeUpdate.png)
 
-还没有结束，重点在`patch`函数，该函数内会调用`createElm`，该函数又会调用`createComponent`，然后在函数内会取`vnode.data.hook.init`，然后调用这个`init`函数。
+### patch
 
-![createElm](./patchCreateElm.png)
-![createComponent](./createComponent.png)
+很复杂的一个函数，主要是对传入的`oldVnode`和`vnode`做判断然后分别进行不同的处理，暂时先理解为调用后会返回新的`DOM`节点吧。
 
-所以接下来要断点到`init`函数内看看了。
+### mounted
 
-#### vnode.data.hook.init
+好吧，饶了一大圈之后，我们是回到了`updateComponent()`， 但这个函数并没有返回值，那我们干了什么呢？
+我们得到了`vm.$el`啊，同时还将该`DOM`插入了页面，所以此时代码继续向下执行，就会调用`mounted`钩子。
 
-位于`/core/vdom/create-component.js`文件内。
+最后返回了`vm`，就结束了整个流程。
 
-`init`钩子会调用`prepatch`钩子，而该钩子又调用`updateChildComponent`函数。
-
-![vnode.data.hook.init](./initHook.png)
-
-#### updateChildComponent
-
-最后调用了`$forceUpdate`，而该方法只是调用了`vm._watcher.update()`方法。
-
-![updateChildComponent](./updateChildComponent.png)
- 

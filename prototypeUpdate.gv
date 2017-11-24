@@ -1,8 +1,15 @@
 digraph G {
-    label="Vue.prototype._update(vnode, hydrating)"
+    graph [
+        label="core/instance/lifecycle.js"
+        fontcolor=blue
+    ]
+    start [
+        label="Vue.prototype._update(vnode, hydrating)"
+    ]
     varVm [
         label="const vm = this"
     ]
+    start -> varVm
     isMounted [
         label="vm._isMounted"
         shape=diamond
@@ -10,12 +17,15 @@ digraph G {
     varVm -> isMounted
     callBeforeUpdateHook [
         label="callHook(vm, 'beforeUpdate')"
+        color=green
+        fontcolor=green
     ]
 
     isMounted -> callBeforeUpdateHook [label="yes"]
     varPrevEl [
         label="const prevEl = vm.$el"
     ]
+    isMounted -> varPrevEl
     callBeforeUpdateHook -> varPrevEl
     varPrevVnode [
         label="const prevVnode = vm._vnode"
@@ -32,26 +42,27 @@ digraph G {
     varInstance -> resetActiveInstance
     setVnode [
         label="vm._vnode = vnode"
+        fontcolor=red
     ]
     resetActiveInstance -> setVnode
     prevVnodeIsTrue [
-        label="prevVnode"
+        label="!prevVnode"
         shape=diamond
     ]
     setVnode -> prevVnodeIsTrue
-
     patch [
         label="vm.$el = vm.__patch__(prevVnode, vnode)"
+        fontcolor=red
     ]
-    prevVnodeIsTrue -> patch [label="yes"]
-
+    prevVnodeIsTrue -> patch [label="no"]
     init [
         label="vm.$el = vm.__patch__(
         vm.$el, vnode, hydrating, false /* removeOnly */,
         vm.$options._parentElm,
         vm.$options._refElm)"
+        fontcolor=red
     ]
-    prevVnodeIsTrue -> init [label="no, so init"]
+    prevVnodeIsTrue -> init [label="yes"]
     set [
         label="vm.$options._parentElm = vm.$options._refElm = null"
     ]
