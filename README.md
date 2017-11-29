@@ -371,14 +371,35 @@ vnode = VNode {
 
 ![Vue.prototype._update](./prototypeUpdate.png)
 
-### patch
-
-很复杂的一个函数，主要是对传入的`oldVnode`和`vnode`做判断然后分别进行不同的处理，暂时先理解为调用后会返回新的`DOM`节点吧。
 
 ### mounted
 
 好吧，饶了一大圈之后，我们是回到了`updateComponent()`， 但这个函数并没有返回值，那我们干了什么呢？
 我们得到了`vm.$el`啊，同时还将该`DOM`插入了页面，所以此时代码继续向下执行，就会调用`mounted`钩子。
 
-最后返回了`vm`，就结束了整个流程。
+最后返回了`vm`，就结束了整个流程。是的，就这么结束了，如果不深入探讨`__patch__`做了什么的话。
 
+## 响应式
+
+我们知道当`data`上的值发生改变，页面就会发生更新。那这个过程发生了什么？
+
+我们很容易会想到，会调用`setter`，而在`setter`中有什么？`dep.notify()`。
+
+可以说组件依赖着`name`，所以`name`闭包中的`dep.subs`存放着`vm.watcher`，当`name`被设置，就调用`dep.notify()`，而该方法会遍历所以依赖于`name`字段的`watcher`调用`update`方法，`update`方法会将`watcher`放入`watcherQueue`中。
+
+queueWatcher ，然后遍历，最后调用 nextTick，看看该函数：
+![nextTick](./nextTick.png)
+
+将`nextTick`的参数放入`callbacks`中
+
+后面调用`flushCallbacks`时，会从`callbacks`中取出每个函数进行调用。但为什么`flushCallbacks`这个函数会被调用呢？
+
+因为在`nextTick`函数里面会调用`macroTimerFunc`，而这个函数被调用了就会跑一个定时器，或者`channel`？
+
+假设使用`channel`吧，先看看介绍[MessageChannel](https://developer.mozilla.org/zh-CN/docs/Web/API/MessageChannel)，简单来说就是一个人可以给另一个人发消息。
+
+最后会去调用`flushSchedulerQueue`函数，该函数会先将`watcher`进行创建顺序的排序（按照 id），然后依次调用`run`方法，最后调用`updated`钩子。
+
+在调用`watcher.run`时，就会更新组件了。
+
+到此，整个流程就比较清晰了。当然还存在一些没有详细说明的地方，比如事件的处理。

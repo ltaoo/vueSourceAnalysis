@@ -1,0 +1,46 @@
+digraph G {
+    graph [
+        label="core/util/next-tick.js"
+        fontcolor=blue
+    ]
+    start [
+        lael="let _resolve"
+    ]
+    push [
+        label="callbacks.push(...)"
+    ]
+    start -> push
+    isPending [
+        label="!pending"
+        shape=diamond
+    ]
+    push -> isPending
+    setPending [
+        label="pending = true"
+    ]
+    isPending -> setPending [label="yes"]
+    useMacroTask [
+        label="useMacroTask"
+        shape=diamond
+    ]
+    setPending -> useMacroTask
+    invokeMacroTimerFunc [
+        label="macroTimerFunc()"
+    ]
+    useMacroTask -> invokeMacroTimerFunc [label="yes"]
+    invokeMicroTimerFunc [
+        label="microTimerFunc()"
+    ]
+    useMacroTask -> invokeMicroTimerFunc [label="no"]
+    cb [
+        label="!cb && typeof Promise !== 'undefined'"
+        shape=diamond
+    ]
+    isPending -> cb
+    invokeMicroTimerFunc -> cb
+    invokeMacroTimerFunc -> cb
+    return [
+        label="return new Promise()"
+    ]
+    cb -> return [label="yes"]
+}
