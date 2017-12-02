@@ -55,19 +55,19 @@ digraph G {
         shape=diamond
     ]
     varParentData -> notProduction
-    defineReactive0 [
-        label="defineReactive(vm, '$attrs', parentData && parentData.attrs || emptyObject, () => {
-        !isUpdatingChildComponent && warn(`$attrs is readonly.`, vm)
-        }, true)"
-    ]
-    notProduction -> defineReactive0 [label="yes"]
+    // defineReactive0 [
+    //     label="defineReactive(vm, '$attrs', parentData && parentData.attrs || emptyObject, () => {
+    //     !isUpdatingChildComponent && warn(`$attrs is readonly.`, vm)
+    //     }, true)"
+    // ]
+    // notProduction -> defineReactive0 [label="yes"]
 
-    defineReactive1 [
-        label="defineReactive(vm, '$listeners', options._parentListeners || emptyObject, () => {
-        !isUpdatingChildComponent && warn(`$listeners is readonly.`, vm)
-        }, true)"
-    ]
-    defineReactive0 -> defineReactive1
+    // defineReactive1 [
+    //     label="defineReactive(vm, '$listeners', options._parentListeners || emptyObject, () => {
+    //     !isUpdatingChildComponent && warn(`$listeners is readonly.`, vm)
+    //     }, true)"
+    // ]
+    // defineReactive0 -> defineReactive1
 
     defineReactive2 [
         label="defineReactive(vm, '$attrs', parentData && parentData.attrs || emptyObject, null, true)"

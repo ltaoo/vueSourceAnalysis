@@ -1,0 +1,65 @@
+digraph {
+    graph [
+        label="core/observer/index.js"
+        fontcolor=blue
+    ]
+
+    start [
+        label="function observe(value, asRootData)"
+    ]
+
+    notVnode [
+        label="!isObject(value) || value instanceof VNode"
+        shape=diamond
+    ]
+    start -> notVnode
+    end [
+        label="return"
+    ]
+    notVnode -> end [label="yes"]
+    varOb [
+        label="let ob"
+    ]
+    notVnode -> varOb
+    hasOb [
+        label="hasOwn(value, '__ob__') && value.__ob__ instanceof Observer"
+        shape=diamond
+    ]
+    varOb -> hasOb
+    resetOb [
+        label="ob = value.__ob__"
+    ]
+    hasOb -> resetOb [label="yes"]
+    shouldConvert [
+        label=" observerState.shouldConvert &&
+        !isServerRendering() &&
+        (Array.isArray(value) || isPlainObject(value)) &&
+        Object.isExtensible(value) &&
+        !value._isVue"
+        shape=diamond
+    ]
+    hasOb -> shouldConvert [label="no"]
+    newObserver [
+        label="ob = new Observer(value)"
+    ]
+    shouldConvert -> newObserver [label="yes"]
+
+    asRootData [
+        label="asRootData && ob"
+        shape=diamond
+    ]
+    shouldConvert -> asRootData [label="no"]
+    resetOb -> asRootData
+    newObserver -> asRootData 
+
+    addCount [
+        label="ob.vmCount++"
+    ]
+    asRootData -> addCount [label="yes"]
+
+    return [
+        label="return ob"
+    ]
+    addCount -> return
+    asRootData -> return
+}

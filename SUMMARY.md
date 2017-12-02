@@ -1,21 +1,19 @@
 # Summary
 
-* [为什么写这本书](README.md)
-* [一个故事](store/dan-sheng.md)
-* [Start](chapter1.md)
-* [Vue Constructor](vue-constructor.md)
-* [Vue.prototype.\_init](vueprototypeinit.md)
-  * initLifecycle
-  * [initEvents](vueprototypeinit/init.md)
-  * initRender
-  * initInjections
-  * [initState](vueprototypeinit/initstate.md)
-    * initProps
-    * initMethods
-    * initData
-    * [initComputed](vueprototypeinit/initstate/initcomputed.md)
-      * [detail](vueprototypeinit/initstate/initcomputed/detail.md)
-    * initWatch
-  * initProvide
-* Vue.prototype.$mount
+* 初始化
+    * [起点](初始化/起点.md)
+    * [Vue构造函数](初始化/Vue 构造函数.md)
+    * [模板方法](初始化/模板方法.md)
+    * [初始化生命周期](初始化/初始化生命周期.md)
+    * [初始化事件](初始化/初始化事件.md)
+    * [初始化渲染](初始化/初始化渲染方法.md)
+    * [初始化状态](初始化/初始化状态.md)
+        * [初始化属性](初始化/初始化状态/初始化属性.md)
+        * [初始化方法](初始化/初始化状态/初始化方法.md)
+        * [初始化数据](初始化/初始化状态/初始化数据.md)
+        * [初始化计算属性](初始化/初始化状态/初始化计算属性.md)
+            * [计算属性的真相](初始化/初始化状态/计算属性的真相.md)
+        * [初始化监听](初始化/初始化状态/初始化监听.md)
+* 加载
+* 响应式系统
 
