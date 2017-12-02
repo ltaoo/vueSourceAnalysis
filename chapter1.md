@@ -1,0 +1,36 @@
+## Start
+
+使用一个最简单的例子来作为起点：
+
+```javascript
+new Vue({
+  el: '#app',
+  template: '<div><p v-text="name"></p></div>',
+  data() {
+    return {
+      firstname: 'li',
+      lastname: 'tao',
+    };
+  },
+  methods: {
+    hello() {
+      console.log('Hello', this.name);
+    },
+  },
+  computed: {
+    name() {
+      return this.firstname + this.lastname;
+    },
+  },
+  watch: {
+    firstname() {
+      console.log(name);
+    },
+  },
+});
+```
+
+\[在线 Demo\]\([https://codepen.io/ltaoo/pen/NwMeEp\](https://codepen.io/ltaoo/pen/NwMeEp\)\)
+
+运行后页面上会渲染出`litao，表示我们的代码执行成功了，我们将要开始去了解从写下这些代码，到页面渲染出内容的过程。`
+

@@ -1,0 +1,26 @@
+{
+  "name": "sourceanalysis",
+  "version": "1.0.0",
+  "description": "vue source analysis",
+  "main": "index.js",
+  "scripts": {
+    "start": "gitbook serve .",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/ltaoo/vueSourceAnalysis.git"
+  },
+  "keywords": [
+    "vue"
+  ],
+  "author": "ltaoo",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/ltaoo/vueSourceAnalysis/issues"
+  },
+  "homepage": "https://github.com/ltaoo/vueSourceAnalysis#readme",
+  "dependencies": {
+    "gitbook": "^3.2.3"
+  }
+}
